@@ -1,0 +1,17 @@
+# Node.js
+node_modules/
+
+# Compiled output
+dist/
+build/
+
+# Logs and databases
+*.log
+*.sqlite
+
+# Environment variables
+.env
+
+# IDE specific files
+.vscode/
+.idea/
