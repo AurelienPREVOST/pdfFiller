@@ -1,9 +1,17 @@
+/* -------------------------------------------------------------------------- */
+/*                                What is does?                               */
+/* -------------------------------------------------------------------------- */
+/*  Run with command line : 'node fillPdfForm'                                */
+/*  From an object fill input thanks to it name with data in value            */
+/*  Text or boolean depends of which  kind of input it is                     */
+/* -------------------------------------------------------------------------- */
+
+
 const { PDFDocument, rgb } = require('pdf-lib');
 const fs = require('fs');
-// const faker = require('faker');
 
-// Path to your PDF file
-const pdfPath = './celui-la.pdf';
+// Choose your PDF
+const pdfPath = './testfilling.pdf';
 
 async function fillPdfForm() {
     try {
@@ -17,9 +25,9 @@ async function fillPdfForm() {
             { name: 'Name', value: "NameInputField" },
             { name: 'Email', value: "EmailInputField" },
             { name: 'Phone', value: "FormInputField" },
-            { name: 'Checkbox1', value: true },
-            { name: 'Checkbox2', value: false },
-            { name: 'Checkbox3', value: true },
+            { name: 'corner-bottom-left', value: true }, // ⚠ If value expected == boolean; value.toString() automatically
+            { name: 'corner-bottom-right', value: false },
+            { name: 'corner-top-left', value: true },
         ];
 
         // Fill each field

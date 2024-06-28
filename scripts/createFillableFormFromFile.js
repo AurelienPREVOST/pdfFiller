@@ -1,24 +1,22 @@
 const fs = require('fs');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
-async function createFillableForm(inputPath, outputPath, fields, checkboxes) {
+async function createFillableForm(inputPath, outputPath, data) {
+  // console.log("data=>", data)
   // Load the existing PDF document
   const existingPdfBytes = fs.readFileSync(inputPath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-  // Add a page to the document (if needed)
-  let page;
-  if (pdfDoc.getPages().length === 0) {
-    page = pdfDoc.addPage([600, 800]);
-  } else {
-    page = pdfDoc.getPage(0); // Modify the first page
-  }
+  // At least one page needed
+  let page = pdfDoc.getPage(0); 
+  const { width: pageWidth, height: pageHeight } = page.getSize();
+  console.log({ width: pageWidth, height: pageHeight })
 
   // Load a standard font to use
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
   // Loop through the fields and add them to the page
-  for (const field of fields) {
+  for (const field of data.fields) {
     const { x, y, width, height, name } = field;
 
     // Create a form field
@@ -30,36 +28,16 @@ async function createFillableForm(inputPath, outputPath, fields, checkboxes) {
     // Optionally, you can set other properties of the text field
     textField.setFontSize(12);
     textField.updateAppearances(font);
-
-    // Optionally, draw a rectangle around the text field for better visibility
-    page.drawRectangle({
-      x,
-      y,
-      width,
-      height,
-      borderColor: rgb(0, 0, 0),
-      borderWidth: 1,
-    });
   }
 
   // Loop through the checkboxes and add them to the page
-  for (const checkbox of checkboxes) {
+  for (const checkbox of data.checkboxes) {
     const { x, y, size, name } = checkbox;
 
     // Create a checkbox field
     const form = pdfDoc.getForm();
     const checkBox = form.createCheckBox(name);
     checkBox.addToPage(page, { x, y, width: size, height: size });
-
-    // Optionally, draw a rectangle around the checkbox for better visibility
-    page.drawRectangle({
-      x,
-      y,
-      width: size,
-      height: size,
-      borderColor: rgb(0, 0, 0),
-      borderWidth: 1,
-    });
   }
 
   // Serialize the PDFDocument to bytes (a Uint8Array)
@@ -69,8 +47,8 @@ async function createFillableForm(inputPath, outputPath, fields, checkboxes) {
   fs.writeFileSync(outputPath, pdfBytes);
 }
 
-const inputPath = './test.pdf';
-const outputPath = 'fillable_form_from_file.pdf';
+const inputPath = '../Pdf_test/toTransform/testAttest.pdf';
+const outputPath = `${inputPath.replace(".pdf", "")}-AAAAAAAAfillable.pdf`;
 
 // Define the fields to add (with coordinates and size)
 const fields = [
@@ -88,7 +66,9 @@ const checkboxes = [
   // Add more checkboxes as needed
 ];
 
-createFillableForm(inputPath, outputPath, fields, checkboxes).then(() => {
+const data = { fields: fields, checkboxes: checkboxes}
+
+createFillableForm(inputPath, outputPath, data).then(() => {
   console.log("\x1b[42m", 'Fillable PDF form with checkboxes created.', "\x1b[0m");
 }).catch(err => {
   console.error("\x1b[41m", 'Error creating fillable PDF form:', err , "\x1b[0m");

@@ -1,12 +1,28 @@
 const fs = require('fs');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
-async function createFillableFormFromNothing(outputPath, fields) {
+/**
+ * Crée un formulaire PDF remplissable à partir de zéro.
+ * 
+ * @param {string} outputPath - Le chemin de sortie du fichier PDF.
+ * @param {Array<{x: number, y: number, width: number, height: number, name: string}>} fields - Un tableau d'objets représentant les champs du formulaire. Chaque objet doit contenir les propriétés suivantes:
+ *   - x: La position x du champ.
+ *   - y: La position y du champ.
+ *   - width: La largeur du champ.
+ *   - height: La hauteur du champ.
+ *   - name: Le nom du champ.
+ * @param {number} [width=600] - La largeur de la page PDF.
+ * @param {number} [height=800] - La hauteur de la page PDF.
+ * 
+ * @returns {Promise<void>} Une promesse qui est résolue lorsque le PDF est créé et sauvegardé.
+ */
+
+async function createFillableFormFromNothing(outputPath, fields, width = 600, height = 800) {
   // Create a new PDF document
   const pdfDoc = await PDFDocument.create();
 
   // Add a page to the document
-  const page = pdfDoc.addPage([600, 800]);
+  const page = pdfDoc.addPage([width, height]);
 
   // Load a standard font to use
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -40,10 +56,11 @@ async function createFillableFormFromNothing(outputPath, fields) {
   const pdfBytes = await pdfDoc.save();
 
   // Write the updated PDF back to the filesystem
-  fs.writeFileSync(outputPath, pdfBytes);
+  fs.writeFileSync(outputPathFull, pdfBytes);
 }
 
-const outputPath = 'fillable_form_from_nothing.pdf';
+const outputPath = "newPdf"
+const outputPathFull = `${outputPath}.pdf`;
 
 // Define the fields to add (with coordinates and size)
 const fields = [
@@ -57,6 +74,11 @@ const fields = [
   { x: 50, y: 650, width: 200, height: 20, name: 'Phone' },
   // Add more fields as needed
 ];
+
+
+
+
+
 
 createFillableFormFromNothing(outputPath, fields).then(() => {
   console.log("\x1b[42m", 'Fillable PDF form created.', "\x1b[0m");

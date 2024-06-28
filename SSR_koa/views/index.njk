@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Affichage de la première page d'un PDF avec dimensions spécifiées</title>
+    <style>
+        * {
+          font-size:14px;
+          padding: 0;
+          margin: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          padding-top: 80px;
+        }
+
+        header {
+          position:fixed;
+          width: 100vw;
+          top:0;
+          left:0;
+          background: #c4a8de;
+          box-shadow: 0px 0px 2px 2px rgb(200, 200, 200);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 1rem;
+        }
+
+        .pdf-container {
+            position: relative;
+            display: inline-block;
+            margin-top: 20px;
+            display:flex;
+            margin: auto;
+            background: grey;
+        }
+        .pdf-image {
+            position: relative;
+            top: 0;
+            left: 0;
+            width: 100%; 
+            height: auto;
+        }
+
+        .inputFormInputContainer {
+          display:flex;
+          flex-direction: column;
+        }
+
+        .inputForm {
+          display: flex;
+          flex-wrap: wrap;
+        }
+        .inputForm input {
+          width: 5rem;
+        }
+
+        .simulate-field {
+          border: 2px dashed red;
+          background-color: blueviolet;
+          width: 10px;
+          height: 10px;
+          top:0;
+          left:0;
+          position:absolute;
+        }
+
+        .inputFormInputContainer {
+          margin:1rem;
+        }
+
+        .oneFieldContainer {
+          margin:2rem;
+          padding:2rem;
+          box-shadow: 0px 0px 2px 1px rgb(200, 200, 200);
+        }
+
+        @keyframes blink {
+        0% { opacity: 1;  }
+        25% { opacity: 0; }
+        50% { opacity: 1; }
+        75% { opacity: 0; }
+        100% { opacity: 1; }
+        }
+
+        .blink {
+          background: greenyellow !important;
+          animation: blink 0.5s ease-in-out;
+        }
+
+        button {
+          margin:1rem;
+          padding: 10px 20px
+        }
+
+        fieldset {width: fit-content; padding:1rem;}
+    </style>
+</head>
+<body>
+    <header>
+      <input type="file" id="pdfFile" accept=".pdf" />
+      <button onclick="addField()">Ajoutez un champ</button>
+      <button onclick="exportData()">Exporter</button>
+    </header>
+    <div class="pdf-container" id="pdfContainer">
+        <img id="pdfImage" class="pdf-image" />
+    </div>
+
+    <script>
+      // Insert le PDF chargé
+        document.getElementById('pdfFile').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const pdfData = e.target.result;
+
+                // Use pdf-lib to get the dimensions of the first page
+                pdfjsLib.getDocument({ data: pdfData }).promise.then(function(pdf) {
+                    return pdf.getPage(1);
+                }).then(function(page) {
+                    const scale = 1.5; // You can adjust the scale if needed
+                    const viewport = page.getViewport({ scale });
+
+                    // Set pdf-container height based on PDF page height
+                    const pdfContainer = document.getElementById('pdfContainer');
+                    pdfContainer.style.height = `${viewport.height}px`;
+                    pdfContainer.style.width = `${viewport.width}px`;
+
+
+                    // Prepare canvas to render the PDF page as image
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    // Render PDF page to canvas
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+
+                    page.render(renderContext).promise.then(function() {
+                        // Convert canvas to base64 image
+                        const base64Image = canvas.toDataURL('image/png');
+
+                        // Display the image in the HTML
+                        const pdfImage = document.getElementById('pdfImage');
+                        pdfImage.src = base64Image;
+                        pdfImage.style.width = `${viewport.width}px`; // Set image width
+                        pdfImage.style.height = `${viewport.height}px`; // Set image height
+                    });
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+    <!-- Include PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+    <script>
+      // Well named
+      function addField() {
+          const uuid = crypto.randomUUID();
+
+          const formContainer = document.createElement('div');
+          formContainer.classList.add('form-container');
+          formContainer.dataset.uuid = uuid;
+
+          formContainer.innerHTML = `
+            <div class="oneFieldContainer" data-uuid="${uuid}">
+              <form class="inputForm" data-uuid="${uuid}">
+                  <div class="inputFormInputContainer">
+                      <label for="name">Name:</label><br>
+                      <input type="text" name="name" class="form-field" placeholder="Name"><br>
+                  </div>
+                  <div class="inputFormInputContainer">
+                      <label for="coordX">Coordinates X:</label><br>
+                      <input type="number" name="coordX" class="form-field" step="5" value="0" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
+                  </div>
+                  <div class="inputFormInputContainer">
+                      <label for="coordY">Coordinates Y:</label><br>
+                      <input type="number" name="coordY" class="form-field" step="5" value="0" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
+                  </div>
+                  <div class="inputFormInputContainer">
+                      <label for="height">Height:</label><br>
+                      <input type="number" name="height" class="form-field" step="5" value="5" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
+                  </div>
+                  <div class="inputFormInputContainer">
+                      <label for="width">Width:</label><br>
+                      <input type="number" name="width" class="form-field" step="5" value="5" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
+                  </div>
+              </form>
+              <fieldset>
+                  <input type="radio" id="fieldset-boolean-${uuid}" name="test-${uuid}" value="Boolean" checked />
+                  <label for="boolean">Boolean</label>
+                  <input type="radio" id="fieldset-text-${uuid}" name="test-${uuid}" value="Text" />
+                  <label for="text">Text</label>
+              </fieldset>
+              <button type="button" onclick="identifyField('${uuid}')">Identify</button>
+              <button type="button" onclick="removeField('${uuid}')">Remove</button>
+            </div>
+          `;
+
+          const pdfContainer = document.getElementById('pdfContainer');
+          
+          // Check if pdfContainer exists
+          if (pdfContainer) {
+              pdfContainer.parentNode.insertBefore(formContainer, pdfContainer);
+
+              const inputSimulate = document.createElement('div');
+              inputSimulate.classList.add('simulate-field');
+              inputSimulate.dataset.uuid = uuid;
+              
+              // Append to pdfContainer
+              pdfContainer.appendChild(inputSimulate);
+          } else {
+              console.error('pdfContainer not found');
+          }
+
+          // Update the initial style
+          updateStyle(uuid);
+      }
+      // RemoveField and div associate
+      function removeField(uuid) {
+          const formContainer = document.querySelector(`.form-container[data-uuid="${uuid}"]`);
+          const inputSimulate = document.querySelector(`.simulate-field[data-uuid="${uuid}"]`);
+          
+          if (formContainer) {
+              formContainer.remove();
+          }
+          
+          if (inputSimulate) {
+              inputSimulate.remove();
+          }
+      }
+      // Dynamically update position
+      function updateStyle(uuid) {
+          const form = document.querySelector(`.inputForm[data-uuid="${uuid}"]`);
+          const simulateField = document.querySelector(`.simulate-field[data-uuid="${uuid}"]`);
+
+          if (form && simulateField) {
+              const coordX = form.querySelector('input[name="coordX"]').value;
+              const coordY = form.querySelector('input[name="coordY"]').value;
+              const height = form.querySelector('input[name="height"]').value;
+              const width = form.querySelector('input[name="width"]').value;
+
+              simulateField.style.position = 'absolute';
+              simulateField.style.top = `${coordY}px`;
+              simulateField.style.left = `${coordX}px`;
+              simulateField.style.height = `${height}px`;
+              simulateField.style.width = `${width}px`;
+          }
+      }
+      // Well named to
+      function identifyField(uuid) {
+        console.log(uuid)
+          const inputToIdentify = document.querySelector(`.simulate-field[data-uuid="${uuid}"]`);
+          console.log("inputToIdentify", inputToIdentify)
+          
+          if (inputToIdentify) {
+              inputToIdentify.classList.add('blink');
+              setTimeout(() => {
+                  inputToIdentify.classList.remove('blink');
+              }, 500); // Duration should match the CSS animation duration
+          }
+      }
+
+      function exportData() {
+        const data = {
+            fields: [],
+            checkboxes: []
+        };
+
+        // Collect all form-container elements
+        const formContainers = document.querySelectorAll('.form-container');
+
+        formContainers.forEach(container => {
+            const uuid = container.dataset.uuid;
+            const form = container.querySelector(`.inputForm[data-uuid="${uuid}"]`);
+            const name = form.querySelector('input[name="name"]').value;
+            const coordX = parseInt(form.querySelector('input[name="coordX"]').value);
+            const coordY = parseInt(form.querySelector('input[name="coordY"]').value);
+            const height = parseInt(form.querySelector('input[name="height"]').value);
+            const width = parseInt(form.querySelector('input[name="width"]').value);
+            const isCheckbox = container.querySelector('input[type="radio"][value="Boolean"]').checked;
+
+            if (isCheckbox) {
+                data.checkboxes.push({
+                    x: coordX,
+                    y: coordY,
+                    size: height, // Assuming the size is the same as height
+                    name: name
+                });
+            } else {
+                data.fields.push({
+                    x: coordX,
+                    y: coordY,
+                    width: width,
+                    height: height,
+                    name: name
+                });
+            }
+        });
+
+        console.log("DATA =====>", data);
+        // Here you can further process the data object, like sending it to a server or saving it to a file
+      }
+
+
+
+
+    </script>
+</body>
+</html>
