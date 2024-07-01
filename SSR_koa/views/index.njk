@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Affichage de la première page d'un PDF avec dimensions spécifiées</title>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
     <style>
         * {
           font-size:14px;
@@ -12,6 +13,7 @@
 
         body {
           padding-top: 80px;
+          background:rgb(220, 220, 220);
         }
 
         header {
@@ -19,7 +21,7 @@
           width: 100vw;
           top:0;
           left:0;
-          background: #c4a8de;
+          background: #dddea8;
           box-shadow: 0px 0px 2px 2px rgb(200, 200, 200);
           z-index: 99999;
           display: flex;
@@ -34,11 +36,12 @@
             margin-top: 20px;
             display:flex;
             margin: auto;
-            background: grey;
+            
         }
         .pdf-image {
+            box-sizing: content-box;
             position: relative;
-            top: 0;
+            bottom: 0;
             left: 0;
             width: 100%; 
             height: auto;
@@ -58,11 +61,11 @@
         }
 
         .simulate-field {
-          border: 2px dashed red;
-          background-color: blueviolet;
+          border: 2px dashed rgb(179, 44, 44);
+          background-color: rgba(140, 194, 229, 0.6);
           width: 10px;
           height: 10px;
-          top:0;
+          bottom:0;
           left:0;
           position:absolute;
         }
@@ -121,7 +124,7 @@
                 pdfjsLib.getDocument({ data: pdfData }).promise.then(function(pdf) {
                     return pdf.getPage(1);
                 }).then(function(page) {
-                    const scale = 1.5; // You can adjust the scale if needed
+                    const scale = 1; // You can adjust the scale if needed
                     const viewport = page.getViewport({ scale });
 
                     // Set pdf-container height based on PDF page height
@@ -247,7 +250,7 @@
               const width = form.querySelector('input[name="width"]').value;
 
               simulateField.style.position = 'absolute';
-              simulateField.style.top = `${coordY}px`;
+              simulateField.style.bottom = `${coordY}px`;
               simulateField.style.left = `${coordX}px`;
               simulateField.style.height = `${height}px`;
               simulateField.style.width = `${width}px`;
@@ -304,13 +307,38 @@
             }
         });
 
-        console.log("DATA =====>", data);
-        // Here you can further process the data object, like sending it to a server or saving it to a file
+        console.log("data =====>", data);
+        console.log("data.fields =====>", data.fields);
+        console.log("data.checkboxes =====>", data.checkboxes);
+
+        // ENVOI AU BACK
+        const fileInput = document.getElementById('pdfFile');
+        const formData = new FormData();
+
+        if (fileInput.files.length === 0) {
+          alert('Please select a file');
+          return;
+        }
+
+        const pdfFile = fileInput.files[0];
+        formData.append('pdfFile', pdfFile);
+        formData.append('data', JSON.stringify(data));
+
+        fetch('http://localhost:3000/buildpdf', {
+          method: 'POST',
+          body: formData,
+        })
+        .then(response => {
+          if (response.ok) {
+            alert('Envoyé au backend');
+          } else {
+            alert('Echec lors de l\'envoi');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
       }
-
-
-
-
     </script>
 </body>
 </html>
