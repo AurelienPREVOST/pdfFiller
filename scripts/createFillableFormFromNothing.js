@@ -18,6 +18,7 @@ const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
  */
 
 async function createFillableFormFromNothing(outputPath, fields, width = 600, height = 800) {
+  console.log("JE NE PASSE JAMAIS PAR CETTE FONCTION DEPUIS LE NAVIGATEUR")
   // Create a new PDF document
   const pdfDoc = await PDFDocument.create();
 

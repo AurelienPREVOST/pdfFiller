@@ -2,7 +2,7 @@
 /*                                What is does?                               */
 /* -------------------------------------------------------------------------- */
 /*  Run with command line : 'node fillPdfForm'                                */
-/*  From an object fill input thanks to it name with data in value            */
+/*  From an object fill input thanks to his name with data in value           */
 /*  Text or boolean depends of which  kind of input it is                     */
 /* -------------------------------------------------------------------------- */
 
@@ -14,6 +14,7 @@ const fs = require('fs');
 const pdfPath = './testfilling.pdf';
 
 async function fillPdfForm() {
+    console.log("JE NE PASSE JAMAIS PAR CETTE FONCTION DEPUIS LE FRONT")
     try {
         // Load existing PDF
         const pdfBytes = fs.readFileSync(pdfPath);
