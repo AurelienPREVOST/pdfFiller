@@ -4,29 +4,41 @@ const views = require('koa-views');
 const { koaBody } = require('koa-body');
 const nunjucks = require('nunjucks');
 const bodyParser = require('koa-bodyparser');
-const fs = require('fs');
-const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const { createFillableForm } = require('./functions/createFillableForm');
+const path = require('path');
 
-// Initialize Koa app and router
+
+
+/* -------------------------------------------------------------------------- */
+/*                        Initialize Koa app and router                       */
+/* -------------------------------------------------------------------------- */
 const app = new Koa();
 const router = new Router();
 
-// Configure Nunjucks templating engine
+/* -------------------------------------------------------------------------- */
+/*                    Configure Nunjucks templating engine                    */
+/* -------------------------------------------------------------------------- */
 nunjucks.configure('views', {
   autoescape: true,
   noCache: true,
 });
 
-// Middleware for rendering views with .njk extension
+/* -------------------------------------------------------------------------- */
+/*               Middleware for rendering views with .njk extension           */
+/* -------------------------------------------------------------------------- */
 app.use(views(__dirname + '/views', {
   extension: 'njk',
   map: { njk: 'nunjucks' }
 }));
 
-// Middleware for parsing request bodies
+/* -------------------------------------------------------------------------- */
+/*                    Middleware for parsing request bodies                   */
+/* -------------------------------------------------------------------------- */
 app.use(bodyParser());
 
-// Middleware pour parser les données multipart/form-data
+/* -------------------------------------------------------------------------- */
+/*           Middleware pour parser les données multipart/form-data           */
+/* -------------------------------------------------------------------------- */
 app.use(koaBody({
   multipart: true,
   formidable: {
@@ -37,67 +49,19 @@ app.use(koaBody({
   }
 }));
 
-// Define routes
+/* -------------------------------------------------------------------------- */
+/*                                  HOME PAGE                                 */
+/* -------------------------------------------------------------------------- */
 router.get('/', async (ctx) => {
+  console.log("jaccede a la racine de l'app '/'")
   await ctx.render('index', { title: 'Home' });
 });
 
-
-async function createFillableForm(inputPath, outputPath, data) {
-  console.log("data=>", data)
-  console.log("typeof data =>", typeof data)
-  // Load the existing PDF document
-  const existingPdfBytes = fs.readFileSync(inputPath);
-  const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
-  // At least one page needed
-  let page = pdfDoc.getPage(0); 
-  const { width: pageWidth, height: pageHeight } = page.getSize();
-  console.log({ width: pageWidth, height: pageHeight })
-
-  // Load a standard font to use
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-  // Loop through the fields and add them to the page
-  console.log("data ==>", data)
-  console.log(data.fields[0])
-  console.log("data.checkboxes and fields =>", data.checkboxes , data.fields)
-  for (const field of data.fields) {
-    const { x, y, width, height, name } = field;
-
-    // Create a form field
-    const form = pdfDoc.getForm();
-    const textField = form.createTextField(name);
-    textField.setText('');
-    textField.addToPage(page, { x, y, width, height });
-
-    // Optionally, you can set other properties of the text field
-    textField.setFontSize(12);
-    textField.updateAppearances(font);
-  }
-
-  // Loop through the checkboxes and add them to the page
-  for (const checkbox of data.checkboxes) {
-    const { x, y, size, name } = checkbox;
-
-    // Create a checkbox field
-    const form = pdfDoc.getForm();
-    const checkBox = form.createCheckBox(name);
-    checkBox.addToPage(page, { x, y, width: size, height: size });
-  }
-
-  // Serialize the PDFDocument to bytes (a Uint8Array)
-  const pdfBytes = await pdfDoc.save();
-  console.log("\x1b[41m", "pdf généré", "\x1b[0m")
-  // Write the updated PDF back to the filesystem
-  console.log("\x1b[45m", "outputPath :", outputPath, "\x1b[0m")
-  fs.writeFileSync(outputPath, pdfBytes);
-}
-
-
-// Route POST pour /buildpdf
+/* -------------------------------------------------------------------------- */
+/*                                  EXPORTER                                  */
+/* -------------------------------------------------------------------------- */
 router.post('/buildpdf', async (ctx) => {
-  console.log("Received a POST request to /buildpdf");
+  console.log("je passe par route.post/buildpdf")
 
   try {
     // Récupération des données JSON depuis le corps de la requête et conversion en objet JavaScript
@@ -106,10 +70,20 @@ router.post('/buildpdf', async (ctx) => {
 
     // Récupération du fichier PDF depuis les fichiers de la requête
     const pdfFile = ctx.request.files.pdfFile;
-    const outputFileDestination = `${pdfFile.filepath.replace(".pdf","")}-output.pdf`;
+    // Création du chemin de stockage futur du fichier généré
+    const outputFileDestination = path.join(__dirname, 'pdfFillable', `${path.basename(pdfFile.filepath, '.pdf')}-output.pdf`);
+
     const inputPath = pdfFile.filepath;
 
     // Appel à la fonction pour créer le formulaire PDF remplissable
+    console.log("################################################")
+    console.log("#        DONNEES TRANSMISES A LA FONCTION      #")
+    console.log("################################################")
+    console.log("inputPath transmis =>", inputPath)
+    console.log("outputFileDestination =>", outputFileDestination)
+    console.log("jsonData =>", jsonData)
+    console.log("################################################")
+
     await createFillableForm(inputPath, outputFileDestination, jsonData);
     console.log("\x1b[42m", 'Fillable PDF form with checkboxes created.', "\x1b[0m");
 
@@ -123,12 +97,14 @@ router.post('/buildpdf', async (ctx) => {
   }
 });
 
-
-
-// Use the routes defined
+/* -------------------------------------------------------------------------- */
+/*                               Activate routes                              */
+/* -------------------------------------------------------------------------- */
 app.use(router.routes()).use(router.allowedMethods());
 
-// Start the server
+/* -------------------------------------------------------------------------- */
+/*                              Start the server                              */
+/* -------------------------------------------------------------------------- */
 const port = 3000;
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
