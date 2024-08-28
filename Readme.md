@@ -1,5 +1,4 @@
-# Pdf form builder from no PDF
-
+# Pdf Fields/checkbox creator
 Attention application non finalisé pour l'heure mais suffisante en l'etat
 
 verifier que node est installé puis installation des packages 
