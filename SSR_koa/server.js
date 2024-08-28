@@ -53,7 +53,6 @@ app.use(koaBody({
 /*                                  HOME PAGE                                 */
 /* -------------------------------------------------------------------------- */
 router.get('/', async (ctx) => {
-  console.log("jaccede a la racine de l'app '/'")
   await ctx.render('index', { title: 'Home' });
 });
 

@@ -30,13 +30,25 @@
           padding: 0 1rem;
         }
 
+        #allFieldsContainer {
+          background:rgb(177, 163, 103);
+          width: 20vw;
+          position: fixed;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          overflow-y: scroll;
+          padding-top: 10vh;
+        }
+
         .pdf-container {
             position: relative;
             display: inline-block;
             margin-top: 20px;
             display:flex;
             margin: auto;
-            
+            margin-left:20vw;
+            padding-left:20vw;            
         }
         .pdf-image {
             box-sizing: content-box;
@@ -47,17 +59,12 @@
             height: auto;
         }
 
-        .inputFormInputContainer {
-          display:flex;
-          flex-direction: column;
-        }
-
         .inputForm {
           display: flex;
           flex-wrap: wrap;
         }
         .inputForm input {
-          width: 5rem;
+          width: 3rem;
         }
 
         .simulate-field {
@@ -71,14 +78,34 @@
         }
 
         .inputFormInputContainer {
-          margin:1rem;
+          margin:0.2rem;
+        }
+
+        .inputForm > :first-child {
+          width:100%;
+        }
+
+        .inputForm > :first-child input {
+          width:100%;
+        }
+
+        input[type="radio"] {
+          margin:0.5rem auto;
         }
 
         .oneFieldContainer {
-          margin:2rem;
-          padding:2rem;
+          background:rgba(255,255,255,0.5);
+          margin:2rem 0.5rem;
+          padding:0.5rem;
           box-shadow: 0px 0px 2px 1px rgb(200, 200, 200);
         }
+
+        .oneFieldContainer button{
+          margin:0.2rem 0rem;
+          padding: 5px 10px;
+          width:100%;
+        }
+
 
         @keyframes blink {
         0% { opacity: 1;  }
@@ -90,7 +117,7 @@
 
         .blink {
           background: greenyellow !important;
-          animation: blink 0.5s ease-in-out;
+          animation: blink 1.5s ease-in-out;
         }
 
         button {
@@ -98,15 +125,36 @@
           padding: 10px 20px
         }
 
-        fieldset {width: fit-content; padding:1rem;}
+        fieldset {display:flex; justify-content: center; align-items: center; padding:0.5rem}
+
+        #pageSelector {
+          text-align: center;
+          display: flex;
+          align-items: center;
+          width:5rem;
+        }
+        #pageSelector button, #pageSelector input {
+          width:3rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height:2rem;
+        }
     </style>
 </head>
 <body>
     <header>
       <input type="file" id="pdfFile" accept=".pdf" />
+      <!-- NE FONCTIONNE PAS ENCORE , EVOLUTION A VENIR -->
+      <div id="pageSelector">
+        <button disabled><</button>
+        <input type="text" value="1" disabled>
+        <button disabled>></button>
+      </div>
       <button onclick="addField()">Ajoutez un champ</button>
       <button onclick="exportData()">Exporter</button>
     </header>
+    <div id="allFieldsContainer"></div>
     <div class="pdf-container" id="pdfContainer">
         <img id="pdfImage" class="pdf-image" />
     </div>
@@ -165,65 +213,70 @@
     <script>
       // Well named
       function addField() {
-          const uuid = crypto.randomUUID();
+        const uuid = crypto.randomUUID();
 
-          const formContainer = document.createElement('div');
-          formContainer.classList.add('form-container');
-          formContainer.dataset.uuid = uuid;
+        const formContainer = document.createElement('div');
+        formContainer.classList.add('form-container');
+        formContainer.dataset.uuid = uuid;
 
-          formContainer.innerHTML = `
+        formContainer.innerHTML = `
             <div class="oneFieldContainer" data-uuid="${uuid}">
-              <form class="inputForm" data-uuid="${uuid}">
-                  <div class="inputFormInputContainer">
-                      <label for="name">Name:</label><br>
-                      <input type="text" name="name" class="form-field" placeholder="Name"><br>
-                  </div>
-                  <div class="inputFormInputContainer">
-                      <label for="coordX">Coordinates X:</label><br>
-                      <input type="number" name="coordX" class="form-field" step="5" value="0" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
-                  </div>
-                  <div class="inputFormInputContainer">
-                      <label for="coordY">Coordinates Y:</label><br>
-                      <input type="number" name="coordY" class="form-field" step="5" value="0" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
-                  </div>
-                  <div class="inputFormInputContainer">
-                      <label for="height">Height:</label><br>
-                      <input type="number" name="height" class="form-field" step="5" value="5" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
-                  </div>
-                  <div class="inputFormInputContainer">
-                      <label for="width">Width:</label><br>
-                      <input type="number" name="width" class="form-field" step="5" value="5" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
-                  </div>
-              </form>
-              <fieldset>
-                  <input type="radio" id="fieldset-boolean-${uuid}" name="test-${uuid}" value="Boolean" checked />
-                  <label for="boolean">Boolean</label>
-                  <input type="radio" id="fieldset-text-${uuid}" name="test-${uuid}" value="Text" />
-                  <label for="text">Text</label>
-              </fieldset>
-              <button type="button" onclick="identifyField('${uuid}')">Identify</button>
-              <button type="button" onclick="removeField('${uuid}')">Remove</button>
+                <form class="inputForm" data-uuid="${uuid}">
+                    <div class="inputFormInputContainer">
+                        <label for="name">Name:</label><br>
+                        <input type="text" name="name" class="form-field" placeholder="Name"><br>
+                    </div>
+                    <div class="inputFormInputContainer">
+                        <label for="coordX">X:</label><br>
+                        <input type="number" name="coordX" class="form-field" step="5" value="0" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
+                    </div>
+                    <div class="inputFormInputContainer">
+                        <label for="coordY">Y:</label><br>
+                        <input type="number" name="coordY" class="form-field" step="5" value="0" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
+                    </div>
+                    <div class="inputFormInputContainer">
+                        <label for="height">H:</label><br>
+                        <input type="number" name="height" class="form-field" step="5" value="15" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
+                    </div>
+                    <div class="inputFormInputContainer">
+                        <label for="width">W:</label><br>
+                        <input type="number" name="width" class="form-field" step="5" value="15" min="0" data-uuid="${uuid}" oninput="updateStyle('${uuid}')"><br>
+                    </div>
+                </form>
+                <fieldset>
+                    <input type="radio" id="fieldset-boolean-${uuid}" name="test-${uuid}" value="Boolean" checked />
+                    <label for="boolean">Boolean</label>
+                    <input type="radio" id="fieldset-text-${uuid}" name="test-${uuid}" value="Text" />
+                    <label for="text">Text</label>
+                </fieldset>
+                <button type="button" onclick="identifyField('${uuid}')">Identify</button>
+                <button type="button" onclick="removeField('${uuid}')">Remove</button>
             </div>
-          `;
+        `;
 
-          const pdfContainer = document.getElementById('pdfContainer');
-          
-          // Check if pdfContainer exists
-          if (pdfContainer) {
-              pdfContainer.parentNode.insertBefore(formContainer, pdfContainer);
+        const allFieldsContainer = document.getElementById('allFieldsContainer');
+        
+        // Check if allFieldsContainer exists
+        if (allFieldsContainer) {
+            allFieldsContainer.appendChild(formContainer);
 
-              const inputSimulate = document.createElement('div');
-              inputSimulate.classList.add('simulate-field');
-              inputSimulate.dataset.uuid = uuid;
-              
-              // Append to pdfContainer
-              pdfContainer.appendChild(inputSimulate);
-          } else {
-              console.error('pdfContainer not found');
-          }
+            const inputSimulate = document.createElement('div');
+            inputSimulate.classList.add('simulate-field');
+            inputSimulate.dataset.uuid = uuid;
+            
+            // Append to pdfContainer (assuming pdfContainer still needs the simulate-field)
+            const pdfContainer = document.getElementById('pdfContainer');
+            if (pdfContainer) {
+                pdfContainer.appendChild(inputSimulate);
+            } else {
+                console.error('pdfContainer not found');
+            }
+        } else {
+            console.error('allFieldsContainer not found');
+        }
 
-          // Update the initial style
-          updateStyle(uuid);
+        // Update the initial style
+        updateStyle(uuid);
       }
       // RemoveField and div associate
       function removeField(uuid) {
@@ -251,7 +304,7 @@
 
               simulateField.style.position = 'absolute';
               simulateField.style.bottom = `${coordY}px`;
-              simulateField.style.left = `${coordX}px`;
+              simulateField.style.left = `calc(${coordX}px + 20vw)`;
               simulateField.style.height = `${height}px`;
               simulateField.style.width = `${width}px`;
           }
